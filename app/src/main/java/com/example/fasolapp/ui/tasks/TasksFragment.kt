@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -21,6 +22,9 @@ import com.example.fasolapp.databinding.FragmentTasksBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 class TasksFragment : Fragment() {
     private var _binding: FragmentTasksBinding? = null
@@ -50,6 +54,7 @@ class TasksFragment : Fragment() {
                 val db = AppDatabase.getDatabase(requireContext())
                 val taskDao = db.taskDao()
                 val completedTaskDao = db.completedTaskDao()
+                val shiftDao = db.shiftDao()
                 val tasks = taskDao.getAllTasks()
 
                 Log.d("TasksFragment", "Tasks loaded: ${tasks.size}")
@@ -69,7 +74,7 @@ class TasksFragment : Fragment() {
                         binding.tasksLayout.addView(emptyView)
                     } else {
                         tasks.forEach { task ->
-                            val taskView = createTaskView(task, userId, completedTaskDao)
+                            val taskView = createTaskView(task, userId, completedTaskDao, shiftDao)
                             binding.tasksLayout.addView(taskView)
                         }
                     }
@@ -92,7 +97,12 @@ class TasksFragment : Fragment() {
         }
     }
 
-    private fun createTaskView(task: Task, employeeId: Int, completedTaskDao: CompletedTaskDao): View {
+    private fun createTaskView(
+        task: Task,
+        employeeId: Int,
+        completedTaskDao: CompletedTaskDao,
+        shiftDao: com.example.fasolapp.data.dao.ShiftDao
+    ): View {
         val view = LayoutInflater.from(context).inflate(R.layout.item_task_action, binding.tasksLayout, false)
         val imageView: ImageView = view.findViewById(R.id.task_image)
         val nameText: TextView = view.findViewById(R.id.task_name)
@@ -106,10 +116,23 @@ class TasksFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val isCompleted = completedTaskDao.countCompletedTask(task.id, employeeId) > 0
+                val activeShift = shiftDao.getActiveShift(employeeId)
+                val isShiftActive = activeShift != null
+                val isTaskTimeValid = isTaskStartTimeValid(task.startTime)
+
                 withContext(Dispatchers.Main) {
-                    actionButton.isEnabled = !isCompleted
+                    actionButton.isEnabled = !isCompleted && isShiftActive && isTaskTimeValid
                     actionButton.text = if (isCompleted) "Выполнено" else "Отметить"
-                    if (!isCompleted) {
+
+                    if (!isShiftActive) {
+                        actionButton.setOnClickListener {
+                            Toast.makeText(context, "Для выполнения задачи начните смену", Toast.LENGTH_SHORT).show()
+                        }
+                    } else if (!isTaskTimeValid) {
+                        actionButton.setOnClickListener {
+                            Toast.makeText(context, "Время начала задачи ещё не наступило", Toast.LENGTH_SHORT).show()
+                        }
+                    } else if (!isCompleted) {
                         actionButton.setOnClickListener {
                             viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
                                 completedTaskDao.insertCompletedTask(
@@ -132,6 +155,35 @@ class TasksFragment : Fragment() {
             }
         }
         return view
+    }
+
+    private fun isTaskStartTimeValid(startTime: String): Boolean {
+        return try {
+            val calendar = Calendar.getInstance()
+            val currentTimeMillis = calendar.timeInMillis
+
+            // Устанавливаем дату на текущий день
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+
+            // Парсим время начала задачи (HH:mm)
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val taskTime = timeFormat.parse(startTime)
+            val taskCalendar = Calendar.getInstance().apply {
+                time = taskTime
+                set(Calendar.YEAR, calendar.get(Calendar.YEAR))
+                set(Calendar.MONTH, calendar.get(Calendar.MONTH))
+                set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH))
+            }
+
+            // Сравниваем с текущим временем
+            currentTimeMillis >= taskCalendar.timeInMillis
+        } catch (e: Exception) {
+            Log.e("TasksFragment", "Error parsing task start time: ${e.message}", e)
+            false // Если парсинг не удался, считаем задачу недоступной
+        }
     }
 
     override fun onDestroyView() {
