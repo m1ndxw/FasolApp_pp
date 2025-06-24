@@ -11,6 +11,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.example.fasolapp.R
 import com.example.fasolapp.data.database.AppDatabase
 import com.example.fasolapp.data.dao.CompletedTaskDao
@@ -35,6 +36,11 @@ class TasksFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Настройка кнопки "Назад"
+        binding.backButton.setOnClickListener {
+            findNavController().navigateUp()
+        }
 
         val sharedPreferences = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userId = sharedPreferences.getInt("userId", 0)
@@ -87,7 +93,6 @@ class TasksFragment : Fragment() {
     }
 
     private fun createTaskView(task: Task, employeeId: Int, completedTaskDao: CompletedTaskDao): View {
-        // Передаем binding.tasksLayout как родительский контейнер
         val view = LayoutInflater.from(context).inflate(R.layout.item_task_action, binding.tasksLayout, false)
         val imageView: ImageView = view.findViewById(R.id.task_image)
         val nameText: TextView = view.findViewById(R.id.task_name)
