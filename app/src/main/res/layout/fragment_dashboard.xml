@@ -46,6 +46,13 @@
             android:layout_marginBottom="16dp"
             android:text="Перейти к задачам" />
 
+        <Button
+            android:id="@+id/button_statistics"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Статистика" />
+
         <TextView
             android:id="@+id/editstats_text"
             android:layout_width="wrap_content"

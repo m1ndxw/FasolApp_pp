@@ -18,4 +18,7 @@ interface EmployeeDao {
     // Получение имени сотрудника по ID
     @Query("SELECT fullName FROM employees WHERE id = :employeeId")
     suspend fun getEmployeeNameById(employeeId: Int): String?
+
+    @Query("SELECT * FROM employees")
+    suspend fun getAllEmployees(): List<Employee>
 }

@@ -50,6 +50,10 @@ class DashboardFragment : Fragment() {
             findNavController().navigate(R.id.action_dashboardFragment_to_tasksFragment)
         }
 
+        binding.buttonStatistics.setOnClickListener {
+            findNavController().navigate(R.id.action_dashboardFragment_to_statisticsFragment)
+        }
+
         binding.editstatsText.setOnClickListener {
             findNavController().navigate(R.id.action_dashboardFragment_to_statisticsFragment)
         }
