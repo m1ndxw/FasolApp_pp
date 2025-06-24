@@ -53,6 +53,14 @@
             android:layout_marginBottom="16dp"
             android:text="Статистика" />
 
+        <Button
+            android:id="@+id/button_admin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:text="Администрирование"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/editstats_text"
             android:layout_width="wrap_content"

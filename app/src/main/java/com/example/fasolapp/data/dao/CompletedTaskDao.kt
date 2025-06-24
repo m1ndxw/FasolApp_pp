@@ -3,12 +3,16 @@ package com.example.fasolapp.data.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Delete
 import com.example.fasolapp.data.entity.CompletedTask
 
 @Dao
 interface CompletedTaskDao {
     @Insert
     suspend fun insertCompletedTask(completedTask: CompletedTask)
+
+    @Delete
+    suspend fun deleteCompletedTask(completedTask: CompletedTask)
 
     @Query("SELECT COUNT(*) FROM completed_tasks WHERE employeeId = :employeeId AND completionDate BETWEEN :startTime AND :endTime")
     suspend fun countCompletedTasks(employeeId: Int, startTime: Long, endTime: Long): Int
@@ -18,4 +22,7 @@ interface CompletedTaskDao {
 
     @Query("SELECT * FROM completed_tasks WHERE employeeId = :employeeId AND completionDate >= :startTime")
     suspend fun getCompletedTasksByUser(employeeId: Int, startTime: Long): List<CompletedTask>
+
+    @Query("SELECT * FROM completed_tasks")
+    suspend fun getAllCompletedTasks(): List<CompletedTask>
 }

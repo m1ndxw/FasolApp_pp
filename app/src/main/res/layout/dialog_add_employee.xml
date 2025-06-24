@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/login_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Логин" />
+
+    <EditText
+        android:id="@+id/password_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Пароль"
+        android:inputType="textPassword" />
+
+    <EditText
+        android:id="@+id/full_name_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Полное имя" />
+
+    <EditText
+        android:id="@+id/role_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Роль (Кассир/Руководитель)" />
+</LinearLayout>

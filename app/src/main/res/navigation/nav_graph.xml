@@ -24,6 +24,9 @@
         <action
             android:id="@+id/action_dashboardFragment_to_statisticsFragment"
             app:destination="@id/statisticsFragment" />
+        <action
+            android:id="@+id/action_dashboardFragment_to_adminFragment"
+            app:destination="@id/adminFragment" />
     </fragment>
 
     <fragment
@@ -36,4 +39,8 @@
         android:name="com.example.fasolapp.ui.statistics.StatisticsFragment"
         tools:layout="@layout/fragment_statistics" />
 
+    <fragment
+        android:id="@+id/adminFragment"
+        android:name="com.example.fasolapp.ui.admin.AdminFragment"
+        tools:layout="@layout/fragment_admin" />
 </navigation>

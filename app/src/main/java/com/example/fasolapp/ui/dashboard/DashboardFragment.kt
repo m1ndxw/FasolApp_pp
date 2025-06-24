@@ -44,7 +44,13 @@ class DashboardFragment : Fragment() {
         val sharedPreferences = requireContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
         val userName = sharedPreferences.getString("userName", "Пользователь")
         val userId = sharedPreferences.getInt("userId", 0)
+        val userRole = sharedPreferences.getString("userRole", "Кассир")
         binding.editheaderText.text = "Здравствуйте, $userName!"
+
+        // Показать кнопку "Администрирование" только для руководителей
+        if (userRole == "Руководитель") {
+            binding.buttonAdmin.visibility = View.VISIBLE
+        }
 
         binding.buttonTasks.setOnClickListener {
             findNavController().navigate(R.id.action_dashboardFragment_to_tasksFragment)
@@ -52,6 +58,10 @@ class DashboardFragment : Fragment() {
 
         binding.buttonStatistics.setOnClickListener {
             findNavController().navigate(R.id.action_dashboardFragment_to_statisticsFragment)
+        }
+
+        binding.buttonAdmin.setOnClickListener {
+            findNavController().navigate(R.id.action_dashboardFragment_to_adminFragment)
         }
 
         binding.editstatsText.setOnClickListener {
