@@ -87,7 +87,8 @@ class TasksFragment : Fragment() {
     }
 
     private fun createTaskView(task: Task, employeeId: Int, completedTaskDao: CompletedTaskDao): View {
-        val view = LayoutInflater.from(context).inflate(R.layout.item_task_action, null, false)
+        // Передаем binding.tasksLayout как родительский контейнер
+        val view = LayoutInflater.from(context).inflate(R.layout.item_task_action, binding.tasksLayout, false)
         val imageView: ImageView = view.findViewById(R.id.task_image)
         val nameText: TextView = view.findViewById(R.id.task_name)
         val timeText: TextView = view.findViewById(R.id.task_time)
