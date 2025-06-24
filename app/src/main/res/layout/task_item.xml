@@ -4,23 +4,24 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/rounded_rectangle"
-    android:padding="16dp"
-    android:layout_marginBottom="8dp">
+    android:padding="12dp"
+    android:layout_margin="8dp">
 
     <ImageView
         android:id="@+id/task_image"
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:layout_gravity="center"
         android:src="@drawable/test"
-        android:layout_marginBottom="8dp" />
+        android:layout_marginBottom="4dp" />
 
     <TextView
         android:id="@+id/task_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="4dp"
+        android:textSize="14sp"
+        android:layout_marginBottom="2dp"
         android:text="Task Name" />
 
     <TextView
@@ -28,7 +29,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="4dp"
+        android:textSize="12sp"
+        android:layout_marginBottom="2dp"
         android:text="Time Range" />
 
     <TextView
@@ -36,6 +38,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:textSize="12sp"
         android:text="Status" />
-
 </LinearLayout>
