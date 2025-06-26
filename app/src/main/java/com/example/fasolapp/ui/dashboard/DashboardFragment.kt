@@ -23,7 +23,9 @@ import com.example.fasolapp.databinding.FragmentDashboardBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Locale
 
 class DashboardFragment : Fragment() {
     private var _binding: FragmentDashboardBinding? = null
@@ -75,10 +77,13 @@ class DashboardFragment : Fragment() {
                 val taskDao = db.taskDao()
                 val completedTaskDao = db.completedTaskDao()
 
-                val tasks = taskDao.getAllTasks()
-                if (tasks.isEmpty()) {
+                val allTasks = taskDao.getAllTasks()
+                if (allTasks.isEmpty()) {
                     insertDailyTasks(taskDao)
                 }
+
+                // Фильтруем задачи, доступные в данный момент
+                val tasks = allTasks.filter { isTaskTimeValid(it.startTime, it.endTime) }
 
                 val activeShift = shiftDao.getActiveShift(userId)
                 val calendar = Calendar.getInstance()
@@ -95,20 +100,21 @@ class DashboardFragment : Fragment() {
                 withContext(Dispatchers.Main) {
                     isShiftActive = activeShift != null
                     binding.buttonShift.text = if (isShiftActive) "Завершить смену" else "Начать смену"
-                    binding.editstatsText.text = if (tasks.isEmpty()) {
+                    binding.editstatsText.text = if (allTasks.isEmpty()) {
                         "Нет задач"
                     } else {
-                        "Задач выполнено: $completedCount / ${tasks.size}"
+                        "Задач выполнено: $completedCount / ${allTasks.size}"
                     }
 
-                    binding.tasksGrid.rowCount = tasks.size / 2 + tasks.size % 2
+                    binding.tasksGrid.rowCount = (tasks.size + 1) / 2 // Округляем вверх
                     binding.tasksGrid.removeAllViews()
-                    tasks.forEach { task ->
+                    tasks.forEachIndexed { index, task ->
                         val taskView = createTaskView(task, userId, completedTaskDao)
                         val params = GridLayout.LayoutParams().apply {
-                            width = 0
+                            width = GridLayout.LayoutParams.WRAP_CONTENT
                             height = GridLayout.LayoutParams.WRAP_CONTENT
-                            columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                            rowSpec = GridLayout.spec(index / 2)
+                            columnSpec = GridLayout.spec(index % 2)
                             setMargins(8, 8, 8, 8)
                         }
                         taskView.layoutParams = params
@@ -170,6 +176,48 @@ class DashboardFragment : Fragment() {
             Task(name = "Очистка кофемашины", startTime = "8:00", endTime = "22:00")
         )
         taskDao.insertTasks(tasks)
+    }
+
+    private fun isTaskTimeValid(startTime: String, endTime: String): Boolean {
+        return try {
+            val calendar = Calendar.getInstance()
+            val currentTimeMillis = calendar.timeInMillis
+
+            // Устанавливаем дату на текущий день
+            calendar.set(Calendar.HOUR_OF_DAY, 0)
+            calendar.set(Calendar.MINUTE, 0)
+            calendar.set(Calendar.SECOND, 0)
+            calendar.set(Calendar.MILLISECOND, 0)
+
+            // Парсим время начала и окончания задачи (HH:mm)
+            val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+            val startTaskTime = timeFormat.parse(startTime)
+            val endTaskTime = timeFormat.parse(endTime)
+
+            val taskStartCalendar = Calendar.getInstance().apply {
+                time = startTaskTime
+                set(Calendar.YEAR, calendar.get(Calendar.YEAR))
+                set(Calendar.MONTH, calendar.get(Calendar.MONTH))
+                set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH))
+            }
+            val taskEndCalendar = Calendar.getInstance().apply {
+                time = endTaskTime
+                set(Calendar.YEAR, calendar.get(Calendar.YEAR))
+                set(Calendar.MONTH, calendar.get(Calendar.MONTH))
+                set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH))
+            }
+
+            // Проверяем, если endTime меньше startTime, добавляем 1 день к endTime
+            if (taskEndCalendar.timeInMillis < taskStartCalendar.timeInMillis) {
+                taskEndCalendar.add(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            // Проверяем, находится ли текущее время в пределах [startTime, endTime]
+            currentTimeMillis >= taskStartCalendar.timeInMillis && currentTimeMillis <= taskEndCalendar.timeInMillis
+        } catch (e: Exception) {
+            Log.e("DashboardFragment", "Error parsing task time: ${e.message}", e)
+            false // Если парсинг не удался, считаем задачу недоступной
+        }
     }
 
     override fun onDestroyView() {

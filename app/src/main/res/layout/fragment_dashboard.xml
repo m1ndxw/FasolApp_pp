@@ -18,6 +18,15 @@
             android:textSize="20sp"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:id="@+id/current_tasks_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Текущие задачи"
+            android:textSize="18sp"
+            android:layout_marginBottom="8dp" />
+
         <GridLayout
             android:id="@+id/tasks_grid"
             android:layout_width="match_parent"
@@ -25,6 +34,7 @@
             android:columnCount="2"
             android:rowCount="0"
             android:alignmentMode="alignMargins"
+            android:useDefaultMargins="true"
             android:columnOrderPreserved="false"
             android:layout_marginBottom="16dp"
             android:padding="4dp">

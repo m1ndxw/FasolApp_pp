@@ -118,7 +118,9 @@ class TasksFragment : Fragment() {
                 val isCompleted = completedTaskDao.countCompletedTask(task.id, employeeId) > 0
                 val activeShift = shiftDao.getActiveShift(employeeId)
                 val isShiftActive = activeShift != null
-                val isTaskTimeValid = isTaskStartTimeValid(task.startTime)
+                val timeValidation = isTaskTimeValid(task.startTime, task.endTime)
+                val isTaskTimeValid = timeValidation.first
+                val isEndTimePassed = timeValidation.second
 
                 withContext(Dispatchers.Main) {
                     actionButton.isEnabled = !isCompleted && isShiftActive && isTaskTimeValid
@@ -128,9 +130,13 @@ class TasksFragment : Fragment() {
                         actionButton.setOnClickListener {
                             Toast.makeText(context, "Для выполнения задачи начните смену", Toast.LENGTH_SHORT).show()
                         }
-                    } else if (!isTaskTimeValid) {
+                    } else if (!isTaskTimeValid && !isEndTimePassed) {
                         actionButton.setOnClickListener {
                             Toast.makeText(context, "Время начала задачи ещё не наступило", Toast.LENGTH_SHORT).show()
+                        }
+                    } else if (!isTaskTimeValid && isEndTimePassed) {
+                        actionButton.setOnClickListener {
+                            Toast.makeText(context, "Время выполнения задачи истекло", Toast.LENGTH_SHORT).show()
                         }
                     } else if (!isCompleted) {
                         actionButton.setOnClickListener {
@@ -157,7 +163,7 @@ class TasksFragment : Fragment() {
         return view
     }
 
-    private fun isTaskStartTimeValid(startTime: String): Boolean {
+    private fun isTaskTimeValid(startTime: String, endTime: String): Pair<Boolean, Boolean> {
         return try {
             val calendar = Calendar.getInstance()
             val currentTimeMillis = calendar.timeInMillis
@@ -168,21 +174,36 @@ class TasksFragment : Fragment() {
             calendar.set(Calendar.SECOND, 0)
             calendar.set(Calendar.MILLISECOND, 0)
 
-            // Парсим время начала задачи (HH:mm)
+            // Парсим время начала и окончания задачи (HH:mm)
             val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val taskTime = timeFormat.parse(startTime)
-            val taskCalendar = Calendar.getInstance().apply {
-                time = taskTime
+            val startTaskTime = timeFormat.parse(startTime)
+            val endTaskTime = timeFormat.parse(endTime)
+
+            val taskStartCalendar = Calendar.getInstance().apply {
+                time = startTaskTime
+                set(Calendar.YEAR, calendar.get(Calendar.YEAR))
+                set(Calendar.MONTH, calendar.get(Calendar.MONTH))
+                set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH))
+            }
+            val taskEndCalendar = Calendar.getInstance().apply {
+                time = endTaskTime
                 set(Calendar.YEAR, calendar.get(Calendar.YEAR))
                 set(Calendar.MONTH, calendar.get(Calendar.MONTH))
                 set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH))
             }
 
-            // Сравниваем с текущим временем
-            currentTimeMillis >= taskCalendar.timeInMillis
+            // Проверяем, если endTime меньше startTime, добавляем 1 день к endTime
+            if (taskEndCalendar.timeInMillis < taskStartCalendar.timeInMillis) {
+                taskEndCalendar.add(Calendar.DAY_OF_MONTH, 1)
+            }
+
+            // Проверяем, находится ли текущее время в пределах [startTime, endTime]
+            val isValid = currentTimeMillis >= taskStartCalendar.timeInMillis && currentTimeMillis <= taskEndCalendar.timeInMillis
+            val isEndTimePassed = currentTimeMillis > taskEndCalendar.timeInMillis
+            Pair(isValid, isEndTimePassed)
         } catch (e: Exception) {
-            Log.e("TasksFragment", "Error parsing task start time: ${e.message}", e)
-            false // Если парсинг не удался, считаем задачу недоступной
+            Log.e("TasksFragment", "Error parsing task time: ${e.message}", e)
+            Pair(false, false) // Если парсинг не удался, считаем задачу недоступной
         }
     }
 
