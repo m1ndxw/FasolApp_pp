@@ -106,8 +106,8 @@ class DashboardFragment : Fragment() {
                         "Задач выполнено: $completedCount / ${allTasks.size}"
                     }
 
-                    // Проверяем, можно ли начать смену (8:00–19:00)
-                    binding.buttonShift.isEnabled = isShiftStartTimeValid() && !isShiftActive
+                    // Устанавливаем состояние кнопки
+                    binding.buttonShift.isEnabled = if (isShiftActive) true else isShiftStartTimeValid()
 
                     binding.tasksGrid.rowCount = (tasks.size + 1) / 2 // Округляем вверх
                     binding.tasksGrid.removeAllViews()
