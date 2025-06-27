@@ -106,15 +106,18 @@ class DashboardFragment : Fragment() {
                         "Задач выполнено: $completedCount / ${allTasks.size}"
                     }
 
+                    // Проверяем, можно ли начать смену (8:00–19:00)
+                    binding.buttonShift.isEnabled = isShiftStartTimeValid() && !isShiftActive
+
                     binding.tasksGrid.rowCount = (tasks.size + 1) / 2 // Округляем вверх
                     binding.tasksGrid.removeAllViews()
                     tasks.forEachIndexed { index, task ->
-                        val taskView = createTaskView(task, userId, completedTaskDao)
+                        val taskView = createTaskView(task, userId, completedTaskDao, startOfDay, endOfDay)
                         val params = GridLayout.LayoutParams().apply {
-                            width = GridLayout.LayoutParams.WRAP_CONTENT
+                            width = 0 // Use weight to distribute evenly
                             height = GridLayout.LayoutParams.WRAP_CONTENT
                             rowSpec = GridLayout.spec(index / 2)
-                            columnSpec = GridLayout.spec(index % 2)
+                            columnSpec = GridLayout.spec(index % 2, 1f) // Equal weight for columns
                             setMargins(8, 8, 8, 8)
                         }
                         taskView.layoutParams = params
@@ -126,12 +129,18 @@ class DashboardFragment : Fragment() {
                             if (isShiftActive && activeShift != null) {
                                 activeShift.endTime = System.currentTimeMillis()
                                 shiftDao.updateShift(activeShift)
-                            } else {
+                                withContext(Dispatchers.Main) {
+                                    isShiftActive = false
+                                    binding.buttonShift.text = "Начать смену"
+                                    binding.buttonShift.isEnabled = isShiftStartTimeValid()
+                                }
+                            } else if (isShiftStartTimeValid()) {
                                 shiftDao.insertShift(Shift(employeeId = userId, startTime = System.currentTimeMillis()))
-                            }
-                            withContext(Dispatchers.Main) {
-                                isShiftActive = !isShiftActive
-                                binding.buttonShift.text = if (isShiftActive) "Завершить смену" else "Начать смену"
+                                withContext(Dispatchers.Main) {
+                                    isShiftActive = true
+                                    binding.buttonShift.text = "Завершить смену"
+                                    binding.buttonShift.isEnabled = true
+                                }
                             }
                         }
                     }
@@ -142,7 +151,7 @@ class DashboardFragment : Fragment() {
         }
     }
 
-    private fun createTaskView(task: Task, employeeId: Int, completedTaskDao: CompletedTaskDao): View {
+    private fun createTaskView(task: Task, employeeId: Int, completedTaskDao: CompletedTaskDao, startOfDay: Long, endOfDay: Long): View {
         val view = LayoutInflater.from(context).inflate(R.layout.task_item, null, false)
         val imageView: ImageView = view.findViewById(R.id.task_image)
         val nameText: TextView = view.findViewById(R.id.task_name)
@@ -154,7 +163,7 @@ class DashboardFragment : Fragment() {
         timeText.text = "${task.startTime}–${task.endTime}"
 
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            val isCompleted = completedTaskDao.countCompletedTask(task.id, employeeId) > 0
+            val isCompleted = completedTaskDao.countCompletedTaskInDateRange(task.id, employeeId, startOfDay, endOfDay) > 0
             withContext(Dispatchers.Main) {
                 statusText.text = if (isCompleted) "Выполнено" else "Не выполнено"
             }
@@ -218,6 +227,16 @@ class DashboardFragment : Fragment() {
             Log.e("DashboardFragment", "Error parsing task time: ${e.message}", e)
             false // Если парсинг не удался, считаем задачу недоступной
         }
+    }
+
+    private fun isShiftStartTimeValid(): Boolean {
+        val calendar = Calendar.getInstance()
+        val currentHour = calendar.get(Calendar.HOUR_OF_DAY)
+        val currentMinute = calendar.get(Calendar.MINUTE)
+        val currentTimeInMinutes = currentHour * 60 + currentMinute
+        val startTimeInMinutes = 8 * 60 // 8:00
+        val endTimeInMinutes = 19 * 60 // 19:00
+        return currentTimeInMinutes in startTimeInMinutes..endTimeInMinutes
     }
 
     override fun onDestroyView() {

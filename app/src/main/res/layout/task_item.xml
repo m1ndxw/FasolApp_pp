@@ -3,6 +3,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:minWidth="150dp"
+    android:maxWidth="180dp"
     android:orientation="vertical"
     android:background="@drawable/rounded_rectangle"
     android:padding="16dp"
@@ -22,7 +23,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginBottom="4dp" />
+        android:layout_marginBottom="4dp"
+        android:maxLines="2"
+        android:ellipsize="end" />
 
     <TextView
         android:id="@+id/task_time"
