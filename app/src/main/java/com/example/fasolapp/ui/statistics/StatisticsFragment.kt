@@ -19,10 +19,7 @@ import com.example.fasolapp.databinding.ItemStatBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Locale
-import kotlin.math.roundToInt
 
 class StatisticsFragment : Fragment() {
     private var _binding: FragmentStatisticsBinding? = null
@@ -70,9 +67,6 @@ class StatisticsFragment : Fragment() {
                 // Пункт 5: Часто выполняемые задачи
                 val frequentTasks = calculateFrequentTasks(userId, taskDao, completedTaskDao)
 
-                // Пункт 7: Среднее время выполнения задач
-                val avgTaskTime = calculateAverageTaskTime(userId, taskDao, completedTaskDao)
-
                 withContext(Dispatchers.Main) {
                     binding.statsLayout.removeAllViews()
 
@@ -86,8 +80,6 @@ class StatisticsFragment : Fragment() {
                         if (employeeRanking.position <= 3) Color.GREEN else Color.YELLOW)
                     addStatView("Часто выполняемые задачи: ${frequentTasks.joinToString { "${it.first} (${it.second} раз)" }}",
                         Color.CYAN)
-                    addStatView("Среднее время на задачу: ${avgTaskTime.roundToInt()} мин",
-                        if (avgTaskTime <= 30) Color.GRAY else Color.RED)
                 }
             } catch (e: Exception) {
                 Log.e("StatisticsFragment", "Error loading stats: ${e.message}", e)
@@ -230,56 +222,6 @@ class StatisticsFragment : Fragment() {
             .take(2)
 
         return taskCounts
-    }
-
-    private suspend fun calculateAverageTaskTime(
-        userId: Int,
-        taskDao: com.example.fasolapp.data.dao.TaskDao,
-        completedTaskDao: com.example.fasolapp.data.dao.CompletedTaskDao
-    ): Double {
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        calendar.add(Calendar.DAY_OF_MONTH, -7)
-        val startOfWeek = calendar.timeInMillis
-
-        val completedTasks = completedTaskDao.getCompletedTasksByUser(userId, startOfWeek)
-        if (completedTasks.isEmpty()) return 0.0
-
-        val totalMinutes = completedTasks.sumOf { completedTask ->
-            val task = taskDao.getTaskById(completedTask.taskId) ?: return@sumOf 0L
-            val startTime = parseTimeToMillis(task.startTime, completedTask.completionDate)
-            val durationMs = completedTask.completionDate - startTime
-            durationMs / (1000 * 60) // Конвертация в минуты
-        }
-
-        return totalMinutes.toDouble() / completedTasks.size
-    }
-
-    private fun parseTimeToMillis(timeStr: String, completionDate: Long): Long {
-        return try {
-            val calendar = Calendar.getInstance().apply { timeInMillis = completionDate }
-            val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val time = sdf.parse(timeStr)
-            val timeCalendar = Calendar.getInstance().apply { timeInMillis = time?.time ?: 0 }
-            calendar.apply {
-                set(Calendar.HOUR_OF_DAY, timeCalendar.get(Calendar.HOUR_OF_DAY))
-                set(Calendar.MINUTE, timeCalendar.get(Calendar.MINUTE))
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }
-            calendar.timeInMillis
-        } catch (e: Exception) {
-            Calendar.getInstance().apply {
-                timeInMillis = completionDate
-                set(Calendar.HOUR_OF_DAY, 0)
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 0)
-                set(Calendar.MILLISECOND, 0)
-            }.timeInMillis
-        }
     }
 
     private fun addStatView(text: String, backgroundColor: Int) {

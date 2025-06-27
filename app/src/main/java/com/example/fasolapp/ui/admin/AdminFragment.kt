@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -171,17 +172,21 @@ class AdminFragment : Fragment() {
             .setTitle("Добавить сотрудника")
             .setView(dialogView)
             .setPositiveButton("Добавить") { _, _ ->
-                val employee = Employee(
-                    login = loginInput.text.toString(),
-                    password = passwordInput.text.toString(),
-                    fullName = fullNameInput.text.toString(),
-                    role = roleInput.text.toString()
-                )
-                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                    employeeDao.insertEmployee(employee)
-                    val employees = employeeDao.getAllEmployees()
-                    withContext(Dispatchers.Main) {
-                        (binding.employeesList.adapter as EmployeeAdapter).updateData(employees)
+                if (loginInput.text.isBlank() || passwordInput.text.isBlank() || fullNameInput.text.isBlank() || roleInput.text.isBlank()) {
+                    Toast.makeText(context, "Заполните все поля для добавления сотрудника", Toast.LENGTH_SHORT).show()
+                } else {
+                    val employee = Employee(
+                        login = loginInput.text.toString(),
+                        password = passwordInput.text.toString(),
+                        fullName = fullNameInput.text.toString(),
+                        role = roleInput.text.toString()
+                    )
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        employeeDao.insertEmployee(employee)
+                        val employees = employeeDao.getAllEmployees()
+                        withContext(Dispatchers.Main) {
+                            (binding.employeesList.adapter as EmployeeAdapter).updateData(employees)
+                        }
                     }
                 }
             }
@@ -205,17 +210,21 @@ class AdminFragment : Fragment() {
             .setTitle("Редактировать сотрудника")
             .setView(dialogView)
             .setPositiveButton("Сохранить") { _, _ ->
-                val updatedEmployee = employee.copy(
-                    login = loginInput.text.toString(),
-                    password = passwordInput.text.toString(),
-                    fullName = fullNameInput.text.toString(),
-                    role = roleInput.text.toString()
-                )
-                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                    employeeDao.updateEmployee(updatedEmployee)
-                    val employees = employeeDao.getAllEmployees()
-                    withContext(Dispatchers.Main) {
-                        (binding.employeesList.adapter as EmployeeAdapter).updateData(employees)
+                if (loginInput.text.isBlank() || passwordInput.text.isBlank() || fullNameInput.text.isBlank() || roleInput.text.isBlank()) {
+                    Toast.makeText(context, "Заполните все поля для редактирования сотрудника", Toast.LENGTH_SHORT).show()
+                } else {
+                    val updatedEmployee = employee.copy(
+                        login = loginInput.text.toString(),
+                        password = passwordInput.text.toString(),
+                        fullName = fullNameInput.text.toString(),
+                        role = roleInput.text.toString()
+                    )
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        employeeDao.updateEmployee(updatedEmployee)
+                        val employees = employeeDao.getAllEmployees()
+                        withContext(Dispatchers.Main) {
+                            (binding.employeesList.adapter as EmployeeAdapter).updateData(employees)
+                        }
                     }
                 }
             }
@@ -242,15 +251,19 @@ class AdminFragment : Fragment() {
             .setTitle("Добавить задачу")
             .setView(dialogView)
             .setPositiveButton("Добавить") { _, _ ->
-                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                    taskDao.insertTask(
-                        nameInput.text.toString(),
-                        startTimeInput.text.toString(),
-                        endTimeInput.text.toString()
-                    )
-                    val tasks = taskDao.getAllTasks()
-                    withContext(Dispatchers.Main) {
-                        (binding.tasksList.adapter as TaskAdapter).updateData(tasks)
+                if (nameInput.text.isBlank() || startTimeInput.text.isBlank() || endTimeInput.text.isBlank()) {
+                    Toast.makeText(context, "Заполните все поля для добавления задачи", Toast.LENGTH_SHORT).show()
+                } else {
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        taskDao.insertTask(
+                            nameInput.text.toString(),
+                            startTimeInput.text.toString(),
+                            endTimeInput.text.toString()
+                        )
+                        val tasks = taskDao.getAllTasks()
+                        withContext(Dispatchers.Main) {
+                            (binding.tasksList.adapter as TaskAdapter).updateData(tasks)
+                        }
                     }
                 }
             }
@@ -272,16 +285,20 @@ class AdminFragment : Fragment() {
             .setTitle("Редактировать задачу")
             .setView(dialogView)
             .setPositiveButton("Сохранить") { _, _ ->
-                val updatedTask = task.copy(
-                    name = nameInput.text.toString(),
-                    startTime = startTimeInput.text.toString(),
-                    endTime = endTimeInput.text.toString()
-                )
-                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-                    taskDao.updateTask(updatedTask)
-                    val tasks = taskDao.getAllTasks()
-                    withContext(Dispatchers.Main) {
-                        (binding.tasksList.adapter as TaskAdapter).updateData(tasks)
+                if (nameInput.text.isBlank() || startTimeInput.text.isBlank() || endTimeInput.text.isBlank()) {
+                    Toast.makeText(context, "Заполните все поля для редактирования задачи", Toast.LENGTH_SHORT).show()
+                } else {
+                    val updatedTask = task.copy(
+                        name = nameInput.text.toString(),
+                        startTime = startTimeInput.text.toString(),
+                        endTime = endTimeInput.text.toString()
+                    )
+                    viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                        taskDao.updateTask(updatedTask)
+                        val tasks = taskDao.getAllTasks()
+                        withContext(Dispatchers.Main) {
+                            (binding.tasksList.adapter as TaskAdapter).updateData(tasks)
+                        }
                     }
                 }
             }
